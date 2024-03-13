@@ -4,9 +4,13 @@ import IElement from "./element/IElement.js"
 import LinkElement from "./element/LinkElement.js"
 import NodeElement from "./element/NodeElement.js"
 import Utility from "./Utility.js"
+import ObjectSerializer from "./serialization/ObjectSerializer.js";
+import ElementFactory$1 from "./element/ElementFactory.js";
+
 
 /** @extends {IElement<Object, BlueprintTemplate>} */
 export default class Blueprint extends IElement {
+    static #serializer = new ObjectSerializer()
 
     static properties = {
         selecting: {
@@ -339,7 +343,7 @@ export default class Blueprint extends IElement {
         // Remember could be renamed in the meantime and DOM not yet updated
         if (!result || result.nodeElement.getNodeName() != pinReference.objectName.toString()) {
             // Slower fallback
-            result = [... this.nodes
+            result = [...this.nodes
                 .find(n => pinReference.objectName.toString() == n.getNodeName())
                 ?.getPinElements() ?? []]
                 .find(p => pinReference.pinGuid.toString() == p.getPinId().toString())
@@ -472,6 +476,37 @@ export default class Blueprint extends IElement {
         )
         this.dispatchEvent(event)
     }
+
+
+    addNodeElement(value) {
+        let nodes = this.readMultiple(value)
+
+        if (nodes.length > 0) {
+            this.blueprint.unselectAll();
+        }
+        nodes.forEach(node => {
+            node.setSelected(true);
+        });
+
+        this.addGraphElement(...nodes);
+        return nodes[0];
+    }
+
+
+    getSerializedText(nodes) {
+        return nodes.map(node => Blueprint.#serializer.write(node.entity, false))
+            .join("")
+    }
+
+
+    readMultiple(value) {
+        return Blueprint.#serializer.readMultiple(value).map(entity => {
+            return (ElementFactory$1.getConstructor('ueb-node'))
+                .newObject(entity);
+        })
+    }
+
+
 }
 
 customElements.define("ueb-blueprint", Blueprint)

@@ -43,8 +43,8 @@ export default class MouseCreateLink extends IMouseClickDrag {
                 this.link.setMessageReplaceOutputLink()
                 this.linkValid = true
             } else if (
-                (a.entity.PinType.PinCategory != "object" || b.entity.PinType.PinCategory != "object")
-                && a.pinType != b.pinType
+                (a.entity.PinType.PinCategory !== "object" || b.entity.PinType.PinCategory !== "object")
+                && (a.pinType && b.pinType && a.pinType !== b.pinType)
             ) {
                 this.link.setMessageTypesIncompatible(a, b)
                 this.linkValid = false

@@ -7527,8 +7527,8 @@ class Unfocus extends IInput {
     /** @param {HTMLElement} target */
     clickedSomewhere(target) {
         // If target is outside the blueprint grid
-        if (!target.closest("ueb-blueprint")) {
-            this.blueprint.setFocused(false);
+        if (!target.closest("ueb-blueprint") && !target.closest(".ueb-header")) {
+            this.blueprint.setFocused(this);
         }
     }
 
@@ -8551,7 +8551,7 @@ class LinkElement extends IFromToPositionedElement {
 
     setMessageConvertType() {
         this.linkMessageIcon = SVGIcon.convert;
-        this.linkMessageText = x`Convert ${this.source.pinType} to ${this.destination.pinType}.`;
+        this.linkMessageText = x`将 ${this.source.pinType} 转换为 ${this.destination.pinType}.`;
     }
 
     setMessageCorrect() {
@@ -8566,27 +8566,27 @@ class LinkElement extends IFromToPositionedElement {
 
     setMessageDirectionsIncompatible() {
         this.linkMessageIcon = SVGIcon.reject;
-        this.linkMessageText = x`Directions are not compatbile.`;
+        this.linkMessageText = x`方向不兼容`;
     }
 
     setMessagePlaceNode() {
         this.linkMessageIcon = A;
-        this.linkMessageText = x`Place a new node.`;
+        this.linkMessageText = x`放置一个新节点`;
     }
 
     setMessageReplaceLink() {
         this.linkMessageIcon = SVGIcon.correct;
-        this.linkMessageText = x`Replace existing input connections.`;
+        this.linkMessageText = x`替换现有输入连接`;
     }
 
     setMessageReplaceOutputLink() {
         this.linkMessageIcon = SVGIcon.correct;
-        this.linkMessageText = x`Replace existing output connections.`;
+        this.linkMessageText = x`替换现有输出连接`;
     }
 
     setMessageSameNode() {
         this.linkMessageIcon = SVGIcon.reject;
-        this.linkMessageText = x`Both are on the same node.`;
+        this.linkMessageText = x`两者位于同一节点上`;
     }
 
     /**
@@ -8596,7 +8596,7 @@ class LinkElement extends IFromToPositionedElement {
     setMessageTypesIncompatible(a, b) {
         this.linkMessageIcon = SVGIcon.reject;
         this.linkMessageText =
-            x`${Utility.capitalFirstLetter(a.pinType)} is not compatible with ${Utility.capitalFirstLetter(b.pinType)}.`;
+            x`${Utility.capitalFirstLetter(a.pinType)} 与 ${Utility.capitalFirstLetter(b.pinType)} 不兼容`;
     }
 }
 
@@ -9342,8 +9342,8 @@ class MouseCreateLink extends IMouseClickDrag {
                 this.link.setMessageReplaceOutputLink();
                 this.linkValid = true;
             } else if (
-                (a.entity.PinType.PinCategory != "object" || b.entity.PinType.PinCategory != "object")
-                && a.pinType != b.pinType
+                (a.entity.PinType.PinCategory !== "object" || b.entity.PinType.PinCategory !== "object")
+                && (a.pinType && b.pinType && a.pinType !== b.pinType)
             ) {
                 this.link.setMessageTypesIncompatible(a, b);
                 this.linkValid = false;
@@ -10241,6 +10241,7 @@ class NodeElement extends ISelectableDraggableElement {
 
 /** @extends {IElement<Object, BlueprintTemplate>} */
 class Blueprint extends IElement {
+    static #serializer = new ObjectSerializer()
 
     static properties = {
         selecting: {
@@ -10573,7 +10574,7 @@ class Blueprint extends IElement {
         // Remember could be renamed in the meantime and DOM not yet updated
         if (!result || result.nodeElement.getNodeName() != pinReference.objectName.toString()) {
             // Slower fallback
-            result = [... this.nodes
+            result = [...this.nodes
                 .find(n => pinReference.objectName.toString() == n.getNodeName())
                 ?.getPinElements() ?? []]
                 .find(p => pinReference.pinGuid.toString() == p.getPinId().toString());
@@ -10706,6 +10707,37 @@ class Blueprint extends IElement {
         );
         this.dispatchEvent(event);
     }
+
+
+    addNodeElement(value) {
+        let nodes = this.readMultiple(value);
+
+        if (nodes.length > 0) {
+            this.blueprint.unselectAll();
+        }
+        nodes.forEach(node => {
+            node.setSelected(true);
+        });
+
+        this.addGraphElement(...nodes);
+        return nodes[0];
+    }
+
+
+    getSerializedText(nodes) {
+        return nodes.map(node => Blueprint.#serializer.write(node.entity, false))
+            .join("")
+    }
+
+
+    readMultiple(value) {
+        return Blueprint.#serializer.readMultiple(value).map(entity => {
+            return (ElementFactory.getConstructor('ueb-node'))
+                .newObject(entity);
+        })
+    }
+
+
 }
 
 customElements.define("ueb-blueprint", Blueprint);
