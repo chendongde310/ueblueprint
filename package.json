@@ -43,6 +43,6 @@
   },
   "dependencies": {
     "lit": "^2",
-    "parsernostrum": "^1"
+    "parsernostrum": "1.1.3"
   }
 }

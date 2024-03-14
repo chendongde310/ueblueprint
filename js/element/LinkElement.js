@@ -265,7 +265,7 @@ export default class LinkElement extends IFromToPositionedElement {
 
     setMessageDirectionsIncompatible() {
         this.linkMessageIcon = SVGIcon.reject
-        this.linkMessageText = html`方向不兼容`
+        this.linkMessageText = html`方向错误`
     }
 
     setMessagePlaceNode() {
@@ -294,6 +294,7 @@ export default class LinkElement extends IFromToPositionedElement {
      */
     setMessageTypesIncompatible(a, b) {
         this.linkMessageIcon = SVGIcon.reject
+        console.log(a.pinType,b.pinType)
         this.linkMessageText =
             html`${Utility.capitalFirstLetter(a.pinType)} 与 ${Utility.capitalFirstLetter(b.pinType)} 不兼容`
     }

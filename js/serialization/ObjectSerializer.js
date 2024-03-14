@@ -32,6 +32,7 @@ export default class ObjectSerializer extends Serializer {
 
     /** @param {String} value */
     doRead(value) {
+
         return Grammar.grammarFor(undefined, this.entityType).parse(value)
     }
 
@@ -40,12 +41,18 @@ export default class ObjectSerializer extends Serializer {
      * @returns {ObjectEntity[]}
      */
     readMultiple(value) {
-        return ObjectEntity.getMultipleObjectsGrammar().parse(value)
+        return ObjectEntity.getMultipleObjectsGrammar().parse(this.addUntPrefix(value))
     }
 
     /**
      * @param {ObjectEntity} entity
      * @param {Boolean} insideString
+     * @param indentation
+     * @param wrap
+     * @param attributeSeparator
+     * @param trailingSeparator
+     * @param attributeValueConjunctionSign
+     * @param attributeKeyPrinter
      * @returns {String}
      */
     doWrite(
@@ -96,6 +103,66 @@ export default class ObjectSerializer extends Serializer {
             )
                 .join("")
             + indentation + "End Object"
-        return result
+        return this.removeUntPrefix(result)
     }
+
+    addUntPrefix(value) {
+        const rules = [
+            "R=True",
+            "G=True",
+            "B=True"
+        ];
+        let result = value;
+        rules.forEach(rule => {
+            // 构建一个动态的正则表达式来匹配规则字符串
+            const pattern = new RegExp(rule, 'g');
+            // 替换匹配到的字符串，在前面添加_UNT_
+            result = result.replace(pattern, `_UNT_${rule}`);
+        });
+
+        //移除整行前缀 LocalVariables
+        result =  this.removeLinesContainingSpecifiedTexts(result)
+        result =  this.removeUnrecognizedContent(result)
+        //移除无法识别的无用的内容      ",LinkedTo=()"
+
+
+
+        return result;
+    }
+
+
+    removeUntPrefix(value) {
+        // 直接替换所有_UNT_为""，即删除它们
+        return value.replace(/_UNT_/g, '');
+    }
+
+
+    removeLinesContainingSpecifiedTexts(text) {
+        const textsToRemove = ["LocalVariables(","Children("];
+        const lines = text.split('\n');  // 将文本拆分为行
+        const filteredLines = lines.filter(line =>
+            !textsToRemove.some(textToRemove => line.includes(textToRemove))
+        );  // 保留不包含任何指定文本的行
+        return filteredLines.join('\n');
+    }
+
+
+      removeUnrecognizedContent(text) {
+          // 定义要移除的模式
+          const patterns = [
+              ',LinkedTo=\\(\\)',  // 匹配 ",LinkedTo=()"
+              // 在此添加更多模式
+          ];
+
+        let result = text;
+        patterns.forEach(pattern => {
+            // 使用正则表达式创建一个全局搜索模式
+            const regex = new RegExp(pattern, 'g');
+            result = result.replace(regex, '');  // 移除匹配的内容
+        });
+        return result;
+    }
+
+
+
 }

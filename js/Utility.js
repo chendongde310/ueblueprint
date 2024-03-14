@@ -350,10 +350,14 @@ export default class Utility {
 
     /** @param {String} value */
     static capitalFirstLetter(value) {
-        if (value.length === 0) {
-            return value
-        }
-        return value.charAt(0).toUpperCase() + value.slice(1)
+
+        if (value){
+            if (value.length === 0) {
+                return value
+            }
+            return value.charAt(0).toUpperCase() + value.slice(1)
+        }else return ''
+
     }
 
     /** @param {String} value */
