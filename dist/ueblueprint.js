@@ -5552,7 +5552,7 @@ class ObjectEntity extends IEntity {
                     const vector = this.getCustomproperties()
                         .find(pinEntity => pinEntity.PinName == "Constant")
                         ?.DefaultValue;
-                    input = [vector.R, vector.G, vector.B, vector.A].map(v => v.valueOf());
+                    input = [vector?.R, vector?.G, vector?.B, vector?.A].map(v => v?.valueOf());
                 }
                 if (input.length > 0) {
                     return input.map(v => Utility.printExponential(v)).reduce((acc, cur) => acc + "," + cur)
@@ -9414,7 +9414,7 @@ class MouseCreateLink extends IMouseClickDrag {
                 this.link.setMessageReplaceOutputLink();
                 this.linkValid = true;
             } else if (
-                a.entity.PinType?.PinCategory !== b.entity.PinType?.PinCategory
+                a.entity.PinType?.PinCategory && b.entity.PinType?.PinCategory &&  a.entity.PinType?.PinCategory !== b.entity.PinType?.PinCategory
             ) {
                 this.link.setMessageTypesIncompatible(a, b);
                 this.linkValid = false;

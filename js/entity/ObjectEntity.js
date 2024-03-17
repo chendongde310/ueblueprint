@@ -726,7 +726,7 @@ export default class ObjectEntity extends IEntity {
                     const vector = this.getCustomproperties()
                         .find(pinEntity => pinEntity.PinName == "Constant")
                         ?.DefaultValue
-                    input = [vector.R, vector.G, vector.B, vector.A].map(v => v.valueOf())
+                    input = [vector?.R, vector?.G, vector?.B, vector?.A].map(v => v?.valueOf())
                 }
                 if (input.length > 0) {
                     return input.map(v => Utility.printExponential(v)).reduce((acc, cur) => acc + "," + cur)
