@@ -39,6 +39,10 @@ export default class Paste extends IInput {
 
     /** @param {String} value */
     pasted(value) {
+        if (window.isPreventRendererEvent) {
+            return
+        }
+
         let top = 0
         let left = 0
         let count = 0

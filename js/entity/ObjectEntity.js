@@ -718,7 +718,7 @@ export default class ObjectEntity extends IEntity {
                     const vector = this.getCustomproperties()
                         .find(pinEntity => pinEntity.PinName == "Constant")
                         ?.DefaultValue
-                    input = [vector.X, vector.Y, vector.Z]
+                    input = [vector?.X, vector?.Y, vector?.Z]
                 }
             case Configuration.paths.materialExpressionConstant4Vector:
                 if (!input) {

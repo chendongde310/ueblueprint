@@ -39,6 +39,9 @@ export default class Copy extends IInput {
     }
 
     copied() {
+        if (window.isPreventRendererEvent) {
+            return
+        }
         const value = this.getSerializedText()
         navigator.clipboard.writeText(value)
         return value

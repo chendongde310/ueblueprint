@@ -71,6 +71,10 @@ export default class KeyboardShortcut extends IInput {
         let self = this
         /** @param {KeyboardEvent} e */
         this.keyDownHandler = e => {
+            if (window.isPreventRendererEvent) {
+                console.log("渲染器按下")
+                return
+            }
             if (
                 self.#activationKeys.some(keyEntry =>
                     wantsShift(keyEntry) == e.shiftKey
@@ -92,6 +96,10 @@ export default class KeyboardShortcut extends IInput {
 
         /** @param {KeyboardEvent} e */
         this.keyUpHandler = e => {
+            if (window.isPreventRendererEvent) {
+                console.log("渲染器松开")
+                return
+            }
             if (
                 self.#activationKeys.some(keyEntry =>
                     keyEntry.bShift && e.key == "Shift"

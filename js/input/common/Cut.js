@@ -44,6 +44,9 @@ export default class Cut extends IInput {
     }
 
     cut() {
+        if (window.isPreventRendererEvent) {
+            return
+        }
         this.blueprint.template.getCopyInputObject().copied()
         this.blueprint.removeGraphElement(...this.blueprint.getNodes(true))
     }

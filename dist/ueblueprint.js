@@ -5544,7 +5544,7 @@ class ObjectEntity extends IEntity {
                     const vector = this.getCustomproperties()
                         .find(pinEntity => pinEntity.PinName == "Constant")
                         ?.DefaultValue;
-                    input = [vector.X, vector.Y, vector.Z];
+                    input = [vector?.X, vector?.Y, vector?.Z];
                 }
             case Configuration.paths.materialExpressionConstant4Vector:
                 if (!input) {
@@ -6348,7 +6348,7 @@ class ObjectSerializer extends Serializer {
 
 
     removeLinesContainingSpecifiedTexts(text) {
-        const textsToRemove = ["LocalVariables(","Children(","CustomProperties UserDefinedPin ("];
+        const textsToRemove = ["LocalVariables(","Children(","CustomProperties UserDefinedPin (","CustomProperties  ("];
         const lines = text.split('\n');  // 将文本拆分为行
         const filteredLines = lines.filter(line =>
             !textsToRemove.some(textToRemove => line.includes(textToRemove))
@@ -6415,6 +6415,9 @@ class Copy extends IInput {
     }
 
     copied() {
+        if (window.isPreventRendererEvent) {
+            return
+        }
         const value = this.getSerializedText();
         navigator.clipboard.writeText(value);
         return value
@@ -6464,6 +6467,9 @@ class Cut extends IInput {
     }
 
     cut() {
+        if (window.isPreventRendererEvent) {
+            return
+        }
         this.blueprint.template.getCopyInputObject().copied();
         this.blueprint.removeGraphElement(...this.blueprint.getNodes(true));
     }
@@ -6644,6 +6650,10 @@ class KeyboardShortcut extends IInput {
         let self = this;
         /** @param {KeyboardEvent} e */
         this.keyDownHandler = e => {
+            if (window.isPreventRendererEvent) {
+                console.log("渲染器按下");
+                return
+            }
             if (
                 self.#activationKeys.some(keyEntry =>
                     wantsShift(keyEntry) == e.shiftKey
@@ -6665,6 +6675,10 @@ class KeyboardShortcut extends IInput {
 
         /** @param {KeyboardEvent} e */
         this.keyUpHandler = e => {
+            if (window.isPreventRendererEvent) {
+                console.log("渲染器松开");
+                return
+            }
             if (
                 self.#activationKeys.some(keyEntry =>
                     keyEntry.bShift && e.key == "Shift"
@@ -7505,6 +7519,10 @@ class Paste extends IInput {
 
     /** @param {String} value */
     pasted(value) {
+        if (window.isPreventRendererEvent) {
+            return
+        }
+
         let top = 0;
         let left = 0;
         let count = 0;
