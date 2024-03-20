@@ -138,7 +138,7 @@ export default class ObjectSerializer extends Serializer {
 
 
     removeLinesContainingSpecifiedTexts(text) {
-        const textsToRemove = ["LocalVariables(","Children("];
+        const textsToRemove = ["LocalVariables(","Children(","CustomProperties UserDefinedPin (","CustomProperties  ("];
         const lines = text.split('\n');  // 将文本拆分为行
         const filteredLines = lines.filter(line =>
             !textsToRemove.some(textToRemove => line.includes(textToRemove))

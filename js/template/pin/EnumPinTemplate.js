@@ -34,7 +34,7 @@ export default class EnumPinTemplate extends IInputPinTemplate {
                     : [k, Utility.formatStringName(k)]
             )
             ?? []
-        const defaultEntry = this.element.getDefaultValue().toString()
+        const defaultEntry = this.element.getDefaultValue()?.toString()
         if (!this.#dropdownEntries.find(([k, v]) => k === defaultEntry)) {
             this.#dropdownEntries.push([defaultEntry, Utility.formatStringName(defaultEntry)])
         }
@@ -47,7 +47,7 @@ export default class EnumPinTemplate extends IInputPinTemplate {
             <ueb-dropdown
                 class="ueb-pin-input-wrapper ueb-pin-input"
                 .options="${this.#dropdownEntries}"
-                .selectedOption="${this.element.defaultValue.value}"
+                .selectedOption="${this.element.defaultValue?.value}"
             >
             </ueb-dropdown>
         `

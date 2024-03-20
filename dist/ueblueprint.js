@@ -6348,7 +6348,7 @@ class ObjectSerializer extends Serializer {
 
 
     removeLinesContainingSpecifiedTexts(text) {
-        const textsToRemove = ["LocalVariables(","Children("];
+        const textsToRemove = ["LocalVariables(","Children(","CustomProperties UserDefinedPin ("];
         const lines = text.split('\n');  // 将文本拆分为行
         const filteredLines = lines.filter(line =>
             !textsToRemove.some(textToRemove => line.includes(textToRemove))
@@ -11376,7 +11376,7 @@ class EnumPinTemplate extends IInputPinTemplate {
                     : [k, Utility.formatStringName(k)]
             )
             ?? [];
-        const defaultEntry = this.element.getDefaultValue().toString();
+        const defaultEntry = this.element.getDefaultValue()?.toString();
         if (!this.#dropdownEntries.find(([k, v]) => k === defaultEntry)) {
             this.#dropdownEntries.push([defaultEntry, Utility.formatStringName(defaultEntry)]);
         }
@@ -11389,7 +11389,7 @@ class EnumPinTemplate extends IInputPinTemplate {
             <ueb-dropdown
                 class="ueb-pin-input-wrapper ueb-pin-input"
                 .options="${this.#dropdownEntries}"
-                .selectedOption="${this.element.defaultValue.value}"
+                .selectedOption="${this.element.defaultValue?.value}"
             >
             </ueb-dropdown>
         `
