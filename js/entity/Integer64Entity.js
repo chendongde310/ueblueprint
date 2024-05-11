@@ -1,17 +1,15 @@
-import IEntity from "./IEntity.js"
 import Parsernostrum from "parsernostrum"
+import AttributeInfo from "./AttributeInfo.js"
+import IEntity from "./IEntity.js"
 
 export default class Integer64Entity extends IEntity {
 
     static attributes = {
         ...super.attributes,
-        value: {
+        value: new AttributeInfo({
             default: 0n,
             predicate: v => v >= -(1n << 63n) && v < 1n << 63n,
-        },
-    }
-    static {
-        this.cleanupAttributes(this.attributes)
+        }),
     }
     static grammar = this.createGrammar()
 
@@ -19,16 +17,18 @@ export default class Integer64Entity extends IEntity {
         return Parsernostrum.numberBigInteger.map(v => new this(v))
     }
 
-    /** @param {BigInt | Number} value */
-    constructor(value = 0) {
-        if (value.constructor !== Object) {
-            value = {
-                // @ts-expect-error
-                value: value,
+    /** @param {BigInt | Number | Object} values */
+    constructor(values = 0) {
+        if (values.constructor !== Object) {
+            values = {
+                value: values,
             }
         }
-        super(value)
-        /** @type {BigInt | Number} */ this.value
+        if (values.value === -0) {
+            values.value = 0n
+        }
+        super(values)
+        /** @type {BigInt} */ this.value
     }
 
     valueOf() {

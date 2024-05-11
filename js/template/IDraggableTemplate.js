@@ -1,7 +1,7 @@
 import Configuration from "../Configuration.js"
-import ITemplate from "./ITemplate.js"
 import KeyboardShortcut from "../input/keyboard/KeyboardShortcut.js"
 import MouseMoveDraggable from "../input/mouse/MouseMoveDraggable.js"
+import ITemplate from "./ITemplate.js"
 
 /**
  * @template {IDraggableElement} T
@@ -15,9 +15,8 @@ export default class IDraggableTemplate extends ITemplate {
     }
 
     createDraggableObject() {
-        return new MouseMoveDraggable(this.element, this.blueprint, {
-            draggableElement: this.getDraggableElement(),
-        })
+        const draggableElement = this.getDraggableElement()
+        return new MouseMoveDraggable(this.element, this.blueprint, { draggableElement })
     }
 
     createInputObjects() {

@@ -1,7 +1,8 @@
-import Grammar from "./Grammar.js"
-import IEntity from "../entity/IEntity.js"
-import SerializerFactory from "./SerializerFactory.js"
 import Utility from "../Utility.js"
+import AttributeInfo from "../entity/AttributeInfo.js"
+import IEntity from "../entity/IEntity.js"
+import Grammar from "./Grammar.js"
+import SerializerFactory from "./SerializerFactory.js"
 
 /** @template {AttributeConstructor<Attribute>} T */
 export default class Serializer {
@@ -54,7 +55,11 @@ export default class Serializer {
         let grammar = Grammar.grammarFor(undefined, this.entityType)
         const parseResult = grammar.run(value)
         if (!parseResult.status) {
-            throw new Error(`Error when trying to parse the entity ${this.entityType.prototype.constructor.name}.`)
+            throw new Error(
+                this.entityType
+                    ? `Error when trying to parse the entity ${this.entityType.prototype.constructor.name}`
+                    : "Error when trying to parse null"
+            )
         }
         return parseResult.value
     }
@@ -75,23 +80,22 @@ export default class Serializer {
         attributeKeyPrinter = this.attributeKeyPrinter
     ) {
         let result = ""
-        const attributes = IEntity.getAttributes(entity)
         const keys = Object.keys(entity)
         let first = true
         for (const key of keys) {
             const value = entity[key]
             if (value !== undefined && this.showProperty(entity, key)) {
                 let keyValue = entity instanceof Array ? `(${key})` : key
-                if (attributes[key]?.quoted) {
+                if (AttributeInfo.getAttribute(entity, key, "quoted")) {
                     keyValue = `"${keyValue}"`
                 }
-                const isSerialized = Utility.isSerialized(entity, key)
+                const isSerialized = AttributeInfo.getAttribute(entity, key, "serialized")
                 if (first) {
                     first = false
                 } else {
                     result += attributeSeparator
                 }
-                if (attributes[key]?.inlined) {
+                if (AttributeInfo.getAttribute(entity, key, "inlined")) {
                     result += this.doWrite(
                         value,
                         insideString,
@@ -100,7 +104,7 @@ export default class Serializer {
                         attributeSeparator,
                         false,
                         attributeValueConjunctionSign,
-                        attributes[key].type instanceof Array
+                        AttributeInfo.getAttribute(entity, key, "type") instanceof Array
                             ? k => attributeKeyPrinter(`${keyValue}${k}`)
                             : k => attributeKeyPrinter(`${keyValue}.${k}`)
                     )
@@ -140,10 +144,21 @@ export default class Serializer {
         return serializer.doWrite(value, insideString, indentation)
     }
 
+    /**
+     * @param {IEntity} entity
+     * @param {String} key
+     */
     showProperty(entity, key) {
-        const attribute = /** @type {EntityConstructor} */(this.entityType).attributes[key]
-        if (attribute?.constructor === Object && attribute.ignored) {
-            return false
+        if (entity instanceof IEntity) {
+            if (
+                AttributeInfo.getAttribute(entity, key, "ignored")
+                || AttributeInfo.getAttribute(entity, key, "silent") && Utility.equals(
+                    AttributeInfo.getAttribute(entity, key, "default"),
+                    entity[key]
+                )
+            ) {
+                return false
+            }
         }
         return true
     }

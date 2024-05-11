@@ -1,10 +1,11 @@
+import Parsernostrum from "parsernostrum"
 import Configuration from "../Configuration.js"
+import Utility from "../Utility.js"
+import AttributeInfo from "../entity/AttributeInfo.js"
 import IEntity from "../entity/IEntity.js"
 import MirroredEntity from "../entity/MirroredEntity.js"
-import Parsernostrum from "parsernostrum"
-import Serializable from "./Serializable.js"
 import Union from "../entity/Union.js"
-import Utility from "../Utility.js"
+import Serializable from "./Serializable.js"
 
 export default class Grammar {
 
@@ -66,16 +67,11 @@ export default class Grammar {
     /*   ---   Factory   ---   */
 
     /**
-     * @template {AttributeTypeDescription} T
-     * @param {T} type
+     * @template T
+     * @param {AttributeInfo<T>} attribute
+     * @returns {Parsernostrum<T>}
      */
-    static grammarFor(
-        attribute,
-        type = attribute?.constructor === Object
-            ? attribute.type
-            : attribute?.constructor,
-        defaultGrammar = this.unknownValue
-    ) {
+    static grammarFor(attribute, type = attribute?.type, defaultGrammar = this.unknownValue) {
         let result = defaultGrammar
         if (type instanceof Array) {
             if (attribute?.inlined) {
@@ -83,9 +79,9 @@ export default class Grammar {
             }
             result = Parsernostrum.seq(
                 Parsernostrum.reg(/\(\s*/),
-                this.grammarFor(undefined, type[0]).sepBy(this.commaSeparation),
+                this.grammarFor(undefined, type[0]).sepBy(this.commaSeparation).opt(),
                 Parsernostrum.reg(/\s*(?:,\s*)?\)/),
-            ).map(([_0, values, _3]) => values)
+            ).map(([_0, values, _3]) => values instanceof Array ? values : [])
         } else if (type instanceof Union) {
             result = type.values
                 .map(v => this.grammarFor(undefined, v))
@@ -94,6 +90,7 @@ export default class Grammar {
                     : Parsernostrum.alt(acc, cur)
                 )
         } else if (type instanceof MirroredEntity) {
+            // @ts-expect-error
             return this.grammarFor(undefined, type.getTargetType())
                 .map(v => new MirroredEntity(type.type, () => v))
         } else if (attribute?.constructor === Object) {
@@ -102,6 +99,9 @@ export default class Grammar {
             switch (type) {
                 case Boolean:
                     result = this.boolean
+                    break
+                case null:
+                    result = this.null
                     break
                 case Number:
                     result = this.number
@@ -114,11 +114,11 @@ export default class Grammar {
                     break
                 default:
                     if (/** @type {AttributeConstructor<any>} */(type)?.prototype instanceof Serializable) {
-                        return /** @type {typeof Serializable} */(type).grammar
+                        result = /** @type {typeof Serializable} */(type).grammar
                     }
             }
         }
-        if (attribute?.constructor === Object) {
+        if (attribute) {
             if (attribute.serialized && type.constructor !== String) {
                 if (result == this.unknownValue) {
                     result = this.string
@@ -137,7 +137,7 @@ export default class Grammar {
      * @template {AttributeConstructor<Attribute>} T
      * @param {T} entityType
      * @param {String[]} key
-     * @returns {AttributeInformation}
+     * @returns {AttributeInfo}
      */
     static getAttribute(entityType, key) {
         let result
@@ -191,13 +191,14 @@ export default class Grammar {
      * @param {(new (...args: any) => T) & EntityConstructor} entityType
      * @param {Boolean | Number} acceptUnknownKeys Number to specify the limit or true, to let it be a reasonable value
      */
-    static createEntityGrammar = (entityType, acceptUnknownKeys = true, entriesSeparator = this.commaSeparation) =>
-        Parsernostrum.seq(
+    static createEntityGrammar(entityType, acceptUnknownKeys = true, entriesSeparator = this.commaSeparation) {
+        const lookbehind = entityType.attributes.lookbehind.default
+        return Parsernostrum.seq(
             Parsernostrum.reg(
-                entityType.lookbehind instanceof Union
-                    ? new RegExp(`(${entityType.lookbehind.values.reduce((acc, cur) => acc + "|" + cur)})\\s*\\(\\s*`)
-                    : entityType.lookbehind.constructor == String && entityType.lookbehind.length
-                        ? new RegExp(`(${entityType.lookbehind})\\s*\\(\\s*`)
+                lookbehind instanceof Union
+                    ? new RegExp(`(${lookbehind.values.reduce((acc, cur) => acc + "|" + cur)})\\s*\\(\\s*`)
+                    : lookbehind.constructor == String && lookbehind.length > 0
+                        ? new RegExp(`(${lookbehind})\\s*\\(\\s*`)
                         : /()\(\s*/,
                 1
             ),
@@ -218,7 +219,7 @@ export default class Grammar {
                 let missingKey
                 // Check missing values
                 if (
-                    Object.keys(/** @type {AttributeInformation} */(entityType.attributes))
+                    Object.keys(/** @type {AttributeDeclarations} */(entityType.attributes))
                         .filter(key => entityType.attributes[key].expected)
                         .find(key => !totalKeys.includes(key) && (missingKey = key))
                 ) {
@@ -230,6 +231,7 @@ export default class Grammar {
                 }
                 return Parsernostrum.success().map(() => new entityType(values))
             })
+    }
 
     /*   ---   Entity   ---   */
 

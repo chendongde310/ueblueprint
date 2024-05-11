@@ -1,8 +1,10 @@
-import { test, expect } from "./fixtures/test.js"
+import Utility from "../js/Utility.js"
 import Configuration from "./../js/Configuration.js"
+import { expect, test } from "./fixtures/test.js"
 import EventNodes from "./resources/EventNodes.js"
 import FlowControlNodes from "./resources/FlowControlNodes.js"
 import InputNodes from "./resources/InputNodes.js"
+import IssuesNodes1 from "./resources/IssuesNodes1.js"
 import LegacyNodes from "./resources/LegacyNodes.js"
 import MaterialNodes from "./resources/MaterialNodes.js"
 import OperationsNodes from "./resources/OperationsNodes.js"
@@ -17,20 +19,16 @@ const nodeTests = [
     ...MaterialNodes.get(),
     ...OperationsNodes.get(),
     ...OtherNodes.get(),
-    ...PCGNodes.get()
+    ...PCGNodes.get(),
+    ...IssuesNodes1.get(),
 ]
-
-/** @param {String[]} words */
-function getFirstWordOrder(words) {
-    return new RegExp(/\s*/.source + words.join(/[^\n]+\n\s*/.source) + /\s*/.source)
-}
-
 
 test.describe.configure({ mode: "parallel" })
 
 for (const nodeTest of nodeTests) {
     test.describe(nodeTest.name, () => {
 
+        test.describe.configure({ mode: "serial" })
         test.beforeAll(async ({ blueprintPage }) => {
             await blueprintPage.removeNodes()
             await blueprintPage.paste(nodeTest.value)
@@ -46,6 +44,7 @@ for (const nodeTest of nodeTests) {
                 }
             )
         }
+
         test(
             `${nodeTest.name}: Has correct delegate`,
             async ({ blueprintPage }) => {
@@ -59,14 +58,16 @@ for (const nodeTest of nodeTests) {
                 }
             }
         )
+
         if (nodeTest.title) {
             test(
                 `${nodeTest.name}: Has title ${nodeTest.title}`,
                 async ({ blueprintPage }) => expect(
-                    await blueprintPage.node.evaluate(node => node.getNodeDisplayName())
+                    await blueprintPage.node.evaluate(node => node.nodeDisplayName)
                 ).toBe(nodeTest.title)
             )
         }
+
         if (nodeTest.subtitle) {
             test(
                 `${nodeTest.name}: Has expected subtitle ${nodeTest.subtitle}`,
@@ -74,6 +75,7 @@ for (const nodeTest of nodeTests) {
                     .toHaveText(nodeTest.subtitle, { useInnerText: true })
             )
         }
+
         if (nodeTest.size) {
             test(
                 `${nodeTest.name}: Has approximately the expected size`,
@@ -97,6 +99,7 @@ for (const nodeTest of nodeTests) {
                 }
             )
         }
+
         if (nodeTest.icon !== undefined) {
             test(
                 `${nodeTest.name}: Has the correct icon`,
@@ -107,6 +110,7 @@ for (const nodeTest of nodeTests) {
                 ).toBe(nodeTest.icon?.strings.join(""))
             )
         }
+
         if (nodeTest.pins !== undefined) {
             test(
                 `${nodeTest.name}: Has ${nodeTest.pins} pins`,
@@ -117,6 +121,7 @@ for (const nodeTest of nodeTests) {
                 ).toBe(nodeTest.pins)
             )
         }
+
         if (nodeTest.pinNames) {
             test(
                 `${nodeTest.name}: Has correct pin names`,
@@ -127,26 +132,26 @@ for (const nodeTest of nodeTests) {
                 }
             )
         }
+
         test(
             `${nodeTest.name}: Expected development`,
             async ({ blueprintPage }) => expect(
                 await blueprintPage.node.evaluate(node => node.entity.isDevelopmentOnly())
             ).toBe(nodeTest.development)
         )
+
         test(
             `${nodeTest.name}: Maintains the order of attributes`,
             async ({ blueprintPage }) => {
-                const value = await blueprintPage.blueprintLocator.evaluate(blueprint => {
-                    blueprint.selectAll()
-                    return blueprint.template.getCopyInputObject().getSerializedText()
-                })
-                const words = value
+                const actualSerialization = await blueprintPage.getSerializedNodes()
+                const expectedWords = nodeTest.value
                     .split("\n")
                     .map(row => row.match(/\s*("?\w+(\s+\w+)*).+/)?.[1])
                     .filter(v => v?.length > 0)
-                expect(value).toMatch(getFirstWordOrder(words))
+                expect(actualSerialization).toMatch(Utility.getFirstWordOrder(expectedWords))
             }
         )
+
         if (nodeTest.variadic) {
             test(
                 `${nodeTest.name}: Can add new pins`,
@@ -158,11 +163,16 @@ for (const nodeTest of nodeTests) {
                 }
             )
         }
+
         if (nodeTest.additionalTest) {
             test(
                 `${nodeTest.name}: Additional tests`,
                 async ({ blueprintPage }) =>
-                    nodeTest.additionalTest(blueprintPage.node, await blueprintPage.node.locator("ueb-pin").all())
+                    nodeTest.additionalTest(
+                        blueprintPage.node,
+                        await blueprintPage.node.locator("ueb-pin").all(),
+                        blueprintPage,
+                    )
             )
         }
     })
