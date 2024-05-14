@@ -6316,16 +6316,25 @@ class ObjectSerializer extends Serializer {
         return this.removeUntPrefix(result)
     }
 
+
+    escapeRegExp(string) {
+        // 转义正则表达式中的特殊字符
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& 表示整个被匹配的字符串
+    }
+
+
     addUntPrefix(value) {
         const rules = [
             "R=True",
             "G=True",
-            "B=True"
+            "B=True",
+            "A=(Expression=",
+            "B=(Expression=",
         ];
         let result = value;
         rules.forEach(rule => {
             // 构建一个动态的正则表达式来匹配规则字符串
-            const pattern = new RegExp(rule, 'g');
+            const pattern = new RegExp(this.escapeRegExp(rule), 'g');
             // 替换匹配到的字符串，在前面添加_UNT_
             result = result.replace(pattern, `_UNT_${rule}`);
         });
@@ -6334,7 +6343,7 @@ class ObjectSerializer extends Serializer {
         result =  this.removeLinesContainingSpecifiedTexts(result);
         result =  this.removeUnrecognizedContent(result);
         //移除无法识别的无用的内容      ",LinkedTo=()"
-
+        result = result.replace(/NaN/g, '0');
 
 
         return result;
