@@ -5,7 +5,6 @@ import LinkElement from "./element/LinkElement.js"
 import NodeElement from "./element/NodeElement.js"
 import BlueprintEntity from "./entity/BlueprintEntity.js"
 import BlueprintTemplate from "./template/BlueprintTemplate.js"
-import Utility from "./Utility.js"
 import ObjectSerializer from "./serialization/ObjectSerializer.js";
 import ElementFactory$1 from "./element/ElementFactory.js";
 

@@ -113,7 +113,9 @@ export default class ObjectSerializer extends Serializer {
         const rules = [
             "R=True",
             "G=True",
-            "B=True"
+            "B=True",
+            "A=(Expression=",
+            "B=(Expression=",
         ];
         let result = value;
         rules.forEach(rule => {

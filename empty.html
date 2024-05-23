@@ -21,6 +21,26 @@
    </script>
    <ueb-blueprint>
    </ueb-blueprint>
+
+   <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+         // 在这里处理错误
+         // 返回 true 可以阻止默认的错误处理
+         if (message.includes('Maximum call stack size exceeded')) {
+            // 在这里处理错误，例如发送错误报告
+
+            console.log("捕获到全局错误：", message);
+            event.preventDefault(); // 阻止默认的错误处理行为（如在控制台显示错误）
+         }
+
+         return true;
+      };
+   </script>
+
+
+
 </body>
+
+
 
 </html>
