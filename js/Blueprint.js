@@ -1,14 +1,16 @@
-import BlueprintTemplate from "./template/BlueprintTemplate.js"
 import Configuration from "./Configuration.js"
+import Utility from "./Utility.js"
 import IElement from "./element/IElement.js"
 import LinkElement from "./element/LinkElement.js"
 import NodeElement from "./element/NodeElement.js"
+import BlueprintEntity from "./entity/BlueprintEntity.js"
+import BlueprintTemplate from "./template/BlueprintTemplate.js"
 import Utility from "./Utility.js"
 import ObjectSerializer from "./serialization/ObjectSerializer.js";
 import ElementFactory$1 from "./element/ElementFactory.js";
 
 
-/** @extends {IElement<Object, BlueprintTemplate>} */
+/** @extends {IElement<BlueprintEntity, BlueprintTemplate>} */
 export default class Blueprint extends IElement {
     static #serializer = new ObjectSerializer()
 
@@ -76,8 +78,6 @@ export default class Blueprint extends IElement {
         node.setSelected(selected)
     }
 
-    /** @type {Map<String, Number>} */
-    #nodeNameCounter = new Map()
     #xScrollingAnimationId = 0
     #yScrollingAnimationId = 0
     /** @type {NodeElement[]}" */
@@ -100,7 +100,7 @@ export default class Blueprint extends IElement {
         this.scrollY = Configuration.expandGridSize
         this.translateX = Configuration.expandGridSize
         this.translateY = Configuration.expandGridSize
-        super.initialize({}, new BlueprintTemplate())
+        super.initialize(new BlueprintEntity(), new BlueprintTemplate())
     }
 
     initialize() {
@@ -343,7 +343,7 @@ export default class Blueprint extends IElement {
         // Remember could be renamed in the meantime and DOM not yet updated
         if (!result || result.nodeElement.getNodeName() != pinReference.objectName.toString()) {
             // Slower fallback
-            result = [...this.nodes
+            result = [... this.nodes
                 .find(n => pinReference.objectName.toString() == n.getNodeName())
                 ?.getPinElements() ?? []]
                 .find(p => pinReference.pinGuid.toString() == p.getPinId().toString())
@@ -394,10 +394,10 @@ export default class Blueprint extends IElement {
         const removeEventHandler = event => {
             const target = event.currentTarget
             target.removeEventListener(Configuration.removeEventName, removeEventHandler)
-            const graphElementsArray = target instanceof NodeElement
-                ? this.nodes
+            const [graphElementsArray, entity] = target instanceof NodeElement
+                ? [this.nodes, target.entity]
                 : target instanceof LinkElement
-                    ? this.links
+                    ? [this.links]
                     : null
             // @ts-expect-error
             const index = graphElementsArray?.indexOf(target)
@@ -407,24 +407,27 @@ export default class Blueprint extends IElement {
                     graphElementsArray[index] = last
                 }
             }
+            if (entity) {
+                this.entity.removeObjectEntity(entity)
+            }
         }
         for (const element of graphElements) {
             element.blueprint = this
             if (element instanceof NodeElement && !this.nodes.includes(element)) {
+                if (element.getType() == Configuration.paths.niagaraClipboardContent) {
+                    this.entity = this.entity.mergeWith(element.entity)
+                    const additionalSerialization = atob(element.entity.ExportedNodes)
+                    this.template.getPasteInputObject().pasted(additionalSerialization)
+                        .forEach(node => node.entity.isExported = true)
+                    continue
+                }
                 const name = element.entity.getObjectName()
-                const homonymNode = this.nodes.find(node => node.entity.getObjectName() == name)
-                if (homonymNode) {
-                    // Inserted node keeps tha name and the homonym nodes is renamed
-                    let name = homonymNode.entity.getObjectName(true)
-                    this.#nodeNameCounter[name] = this.#nodeNameCounter[name] ?? -1
-                    do {
-                        ++this.#nodeNameCounter[name]
-                    } while (this.nodes.find(node =>
-                        node.entity.getObjectName() == Configuration.nodeTitle(name, this.#nodeNameCounter[name])
-                    ))
-                    homonymNode.rename(Configuration.nodeTitle(name, this.#nodeNameCounter[name]))
+                const homonym = this.entity.getHomonymObjectEntity(element.entity)
+                if (homonym) {
+                    homonym.Name = this.entity.takeFreeName(name)
                 }
                 this.nodes.push(element)
+                this.entity.addObjectEntity(element.entity)
                 element.addEventListener(Configuration.removeEventName, removeEventHandler)
                 this.template.nodesContainerElement?.appendChild(element)
             } else if (element instanceof LinkElement && !this.links.includes(element)) {
