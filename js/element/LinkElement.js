@@ -261,7 +261,7 @@ export default class LinkElement extends IFromToPositionedElement {
 
     setMessageConvertType() {
         this.linkMessageIcon = SVGIcon.convert
-        this.linkMessageText = html`Convert ${this.source.pinType} to ${this.destination.pinType}.`
+        this.linkMessageText = html`将 ${this.source.pinType} 转换为 ${this.destination.pinType}。`
     }
 
     setMessageCorrect() {
@@ -276,27 +276,27 @@ export default class LinkElement extends IFromToPositionedElement {
 
     setMessageDirectionsIncompatible() {
         this.linkMessageIcon = SVGIcon.reject
-        this.linkMessageText = html`Directions are not compatbile.`
+        this.linkMessageText = html`方向不兼容。`
     }
 
     setMessagePlaceNode() {
         this.linkMessageIcon = nothing
-        this.linkMessageText = html`Place a new node.`
+        this.linkMessageText = html`请放置一个新节点。`
     }
 
     setMessageReplaceLink() {
         this.linkMessageIcon = SVGIcon.correct
-        this.linkMessageText = html`Replace existing input connections.`
+        this.linkMessageText = html`替换现有的输入连接。`
     }
 
     setMessageReplaceOutputLink() {
         this.linkMessageIcon = SVGIcon.correct
-        this.linkMessageText = html`Replace existing output connections.`
+        this.linkMessageText = html`替换现有的输出连接。`
     }
 
     setMessageSameNode() {
         this.linkMessageIcon = SVGIcon.reject
-        this.linkMessageText = html`Both are on the same node.`
+        this.linkMessageText = html`两者位于同一个节点上。`
     }
 
     /**
@@ -306,6 +306,7 @@ export default class LinkElement extends IFromToPositionedElement {
     setMessageTypesIncompatible(a, b) {
         this.linkMessageIcon = SVGIcon.reject
         this.linkMessageText =
-            html`${Utility.capitalFirstLetter(a.pinType)} is not compatible with ${Utility.capitalFirstLetter(b.pinType)}.`
+            html`${Utility.capitalFirstLetter(a.pinType)} 与 ${Utility.capitalFirstLetter(b.pinType)} 不兼容。`
     }
+
 }
